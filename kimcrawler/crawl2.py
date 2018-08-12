@@ -16,11 +16,20 @@ def main():
     ul = soup.find("ul", {"class": "pager"})
     link = ul.find("a", text= re.compile("Last"))
     pages = int(link['page'])
+    attempts = 0
+    current_page += 94
     while (current_page != pages):
         try:
             print("Getting page" + str(current_page))
             getCartoons(current_page, pages+1)
         except:
+            if(attempts == 2):
+                attempts = 0
+                current_page += 1
+                continue
+
+            attempts += 1
+
             print("Stopped at " + str(current_page))
             print("Sleeping for three minutes and trying again")
             time.sleep(180) 
@@ -41,6 +50,7 @@ def appendToJson(json_data):
 def getCartoonList(cartoon_list_page):
     global url;
     new_url = url + "?page=" + str(cartoon_list_page)
+    print("Working on page" + str(cartoon_list_page))
     soup = soupify(new_url)
     return getCartoonNameUrls(soup)
 
@@ -51,9 +61,12 @@ def getCartoonNameUrls(soup):
     cartoons = cartoon_list.findAll("div")
     for cartoon in cartoons:
         link = base_url + cartoon.find("a")['href']
-        title = BeautifulSoup(cartoon['title'], "html.parser")
-        title = title.find("p").text
-        data[title] = link
+        try:
+            title = BeautifulSoup(cartoon['title'], "html.parser")
+            title = title.find("p").text
+            data[title] = link
+        except:
+            print(cartoon)
 
     return data
         
